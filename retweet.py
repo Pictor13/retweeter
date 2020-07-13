@@ -36,7 +36,12 @@ RETWEETS_FILENAME = 'retweet_messages.txt'
 
 def load_retweet_messages():
     with open(CONFIG_DIR + RETWEETS_FILENAME) as filehandler:
-        retweet_messages = [line.strip() for line in filehandler]
+        retweet_messages = []
+        # get each line that doesn't start with '//'
+        for line in filehandler:
+            line = line.strip()
+            if line[0:2] != '//' and line != '':
+                retweet_messages.append(line);
     return retweet_messages
 
 
@@ -84,7 +89,7 @@ def reply():
         if search_text in mention.text.lower():
             print('found "' + search_text + '". responding back ...')
             status_text = '@{mention.user.screen_name} ' + get_random_message()
-            status_text += get_random_trendname()
+            status_text += ' [trend: ' + get_random_trendname() + ']'
             api.update_status(status_text, mention.id)
             api.retweet(mention.id)
 

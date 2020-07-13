@@ -1,3 +1,6 @@
+// This is a comment.
+// Remember to consider the max lenght of a tweet, when adding new messages
+
 esempio tweet
 #iGattiniOdianoSalvini https://imgur.com/0ZlAC0P
 https://imgur.com/miOWDkq

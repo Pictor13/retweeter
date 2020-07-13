@@ -92,6 +92,8 @@ def reply():
             status_text += ' [trend: ' + get_random_trendname() + ']'
             api.update_status(status_text, mention.id)
             api.retweet(mention.id)
+    if len(mentions) == 0:
+        print('no mentions found. next check in ' + str(api_rate_limit) + ' seconds')
 
 
 # run program --------------------------------------
@@ -138,7 +140,7 @@ localized_trend_names = fetch_trend_names()
 # load the messages for the retweets
 retweet_messages = load_retweet_messages()
 
-# pool
+# pool requests
 while True:
     reply()
     time.sleep(api_rate_limit)

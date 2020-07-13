@@ -33,7 +33,7 @@ random_messages = [
 ]
 
 # storage for the last processed id
-STORAGE_PATH = ''
+STORAGE_PATH = 'last_seen_id.txt'
 
 
 # Functions definition --------------------------------------

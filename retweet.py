@@ -36,8 +36,8 @@ random_messages = [
 # WOEID of ROMA
 woeid = 721943
 
-# storage for laast id
-FILE_NAME = 'last_seen_id.txt'
+# storage for the last processed id
+STORAGE_PATH = ''
 
 
 # Functions definition --------------------------------------
@@ -71,14 +71,14 @@ def store_last_seen_id(last_seen_id, file_name):
 
 
 def reply():
-    print("replying...")
-    last_seen_id = retrieve_last_seen_id(FILE_NAME)
+    print("replying ...")
+    last_seen_id = retrieve_last_seen_id(STORAGE_PATH)
     mentions = api.mentions_timeline(last_seen_id)
 
     for mention in reversed(mentions):
         print(str(mention.id) + ' - ' + mention.text)
         last_seen_id = mention.id
-        store_last_seen_id(last_seen_id, FILE_NAME)
+        store_last_seen_id(last_seen_id, STORAGE_PATH)
         if search_text in mention.text.lower():
             print('found SpiniNelFianco! #MaryNewsWeb!')
             print('responding back...')

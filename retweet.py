@@ -24,13 +24,6 @@ ACCESS_SECRET = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 # See docs at: https://developer.twitter.com/ja/docs/basics/rate-limits
 api_rate_limit = 5*60
 
-# messages for retweeting
-random_messages = [
-    ' esempio tweet ',
-    ' #iGattiniOdianoSalvini https://imgur.com/0ZlAC0P',
-    ' https://imgur.com/miOWDkq',
-    ' #iGattiniOdianoSalvini https://imgur.com/0ZlAC0P'
-]
 
 CONFIG_DIR = 'config/'
 # storage for the last processed id & messages for the retweets.
@@ -40,6 +33,12 @@ RETWEETS_FILENAME = 'retweet_messages.txt'
 
 
 # Functions definition --------------------------------------
+
+def load_retweet_messages():
+    with open(CONFIG_DIR + RETWEETS_FILENAME) as filehandler:
+        retweet_messages = [line.strip() for line in filehandler]
+    return retweet_messages
+
 
 def fetch_trend_names():
     api_response = api.trends_place(id=woeid)
@@ -52,7 +51,7 @@ def fetch_trend_names():
 
 
 def get_random_message():
-    return random.choice(random_messages)
+    return random.choice(retweet_messages)
 
 
 def get_random_trendname():
@@ -86,8 +85,8 @@ def reply():
             print('found "' + search_text + '". responding back ...')
             status_text = '@{mention.user.screen_name} ' + get_random_message()
             status_text += get_random_trendname()
-            # api.update_status(status_text, mention.id)
-            # api.retweet(mention.id)
+            api.update_status(status_text, mention.id)
+            api.retweet(mention.id)
 
 
 # run program --------------------------------------
@@ -119,17 +118,20 @@ auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
 auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)
 api = tweepy.API(
     auth,
-    retry_count = 5,
-    retry_delay = 10,
-    retry_errors = set([401, 404, 500, 503]),
-    wait_on_rate_limit = True,
-    wait_on_rate_limit_notify = True,
+    retry_count=5,
+    retry_delay=10,
+    retry_errors=set([401, 404, 500, 503]),
+    wait_on_rate_limit=True,
+    wait_on_rate_limit_notify=True,
 )
 
 
 # fetching the trends names
 print('API: fetch latest trends ...')
 localized_trend_names = fetch_trend_names()
+
+# load the messages for the retweets
+retweet_messages = load_retweet_messages()
 
 # pool
 while True:

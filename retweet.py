@@ -32,9 +32,6 @@ random_messages = [
     ' #iGattiniOdianoSalvini https://imgur.com/0ZlAC0P'
 ]
 
-# WOEID of ROMA
-woeid = 721943
-
 # storage for the last processed id
 STORAGE_PATH = ''
 
@@ -80,24 +77,36 @@ def reply():
         store_last_seen_id(last_seen_id, STORAGE_PATH)
         if search_text in mention.text.lower():
             print('found "' + search_text + '". responding back ...')
-            status_text = '@'+mention.user.screen_name + get_random_message()
-            api.update_status(status_text, mention.id)
-            api.retweet(mention.id)
+            status_text = '@{mention.user.screen_name} ' + get_random_message()
+            status_text += get_random_trendname()
+            # api.update_status(status_text, mention.id)
+            # api.retweet(mention.id)
 
 
 # run program --------------------------------------
 
 # resolve script arguments
 parser = argparse.ArgumentParser()
-parser.add_argument('--search', dest='search_text', default='#spininelfianco')
+parser.add_argument(
+    '--search',
+    dest='search_text',
+    default='#spininelfianco'
+)
+parser.add_argument(
+    '--trend-woeid',
+    dest='trend_woeid',
+    default='721943'    # ROME
+)
 args = parser.parse_args()
 
+# assign script arguments
 search_text = args.search_text
+woeid = args.trend_woeid
 
 
 print("start replying tweets containing \"" + search_text + "\" ...")
 
-# API authentication --------------------------------------
+# API authentication
 
 auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
 auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)

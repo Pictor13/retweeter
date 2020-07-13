@@ -43,10 +43,13 @@ FILE_NAME = 'last_seen_id.txt'
 # Functions definition --------------------------------------
 
 def fetch_trend_names():
-    trends = api.trends_place(id=woeid)
+    api_response = api.trends_place(id=woeid)
+    trends = api_response[0]['trends']
+    # to debug response format: ``import json`` + ``print(json.dumps(trends))``
     trend_names = []
     for trend in trends:
-        trend_names.append(trend.name)
+        # print(trend)
+        trend_names.append(trend['name'])
 
 
 def get_random_message():

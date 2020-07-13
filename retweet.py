@@ -32,8 +32,11 @@ random_messages = [
     ' #iGattiniOdianoSalvini https://imgur.com/0ZlAC0P'
 ]
 
-# storage for the last processed id
-STORAGE_PATH = 'last_seen_id.txt'
+CONFIG_DIR = 'config/'
+# storage for the last processed id & messages for the retweets.
+# location is under CONFIG_PATH.
+STORAGE_FILENAME = 'last_seen_id.txt'
+RETWEETS_FILENAME = 'retweet_messages.txt'
 
 
 # Functions definition --------------------------------------
@@ -53,14 +56,14 @@ def get_random_message():
 
 
 def retrieve_last_seen_id(file_name):
-    f_read = open(file_name, 'r')
+    f_read = open(CONFIG_DIR + file_name, 'r')
     last_seen_id = int(f_read.read().strip())
     f_read.close()
     return last_seen_id
 
 
 def store_last_seen_id(last_seen_id, file_name):
-    f_write = open(file_name, 'w')
+    f_write = open(CONFIG_DIR + file_name, 'w')
     f_write.write(str(last_seen_id))
     f_write.close()
     return
@@ -68,13 +71,13 @@ def store_last_seen_id(last_seen_id, file_name):
 
 def reply():
     print("replying ...")
-    last_seen_id = retrieve_last_seen_id(STORAGE_PATH)
+    last_seen_id = retrieve_last_seen_id(STORAGE_FILENAME)
     mentions = api.mentions_timeline(last_seen_id)
 
     for mention in reversed(mentions):
         print(str(mention.id) + ' - ' + mention.text)
         last_seen_id = mention.id
-        store_last_seen_id(last_seen_id, STORAGE_PATH)
+        store_last_seen_id(last_seen_id, STORAGE_FILENAME)
         if search_text in mention.text.lower():
             print('found "' + search_text + '". responding back ...')
             status_text = '@{mention.user.screen_name} ' + get_random_message()

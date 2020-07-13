@@ -7,6 +7,7 @@ Created on Fri Mar  5 17:10:23 2020
 import tweepy
 import time
 import random
+import argparse
 
 
 # API configuration
@@ -18,8 +19,6 @@ ACCESS_SECRET = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 
 
 # Variables definition --------------------------------------
-
-search_text = '#spininelfianco'  # TODO: text from executable/script argument
 
 # max 5 minutes rate limit
 # See docs at: https://developer.twitter.com/ja/docs/basics/rate-limits
@@ -80,13 +79,21 @@ def reply():
         last_seen_id = mention.id
         store_last_seen_id(last_seen_id, STORAGE_PATH)
         if search_text in mention.text.lower():
-            print('found SpiniNelFianco! #MaryNewsWeb!')
-            print('responding back...')
-            api.update_status('@'+mention.user.screen_name + get_random_message(), mention.id)
+            print('found "' + search_text + '". responding back ...')
+            status_text = '@'+mention.user.screen_name + get_random_message()
+            api.update_status(status_text, mention.id)
             api.retweet(mention.id)
 
 
 # run program --------------------------------------
+
+# resolve script arguments
+parser = argparse.ArgumentParser()
+parser.add_argument('--search', dest='search_text', default='#spininelfianco')
+args = parser.parse_args()
+
+search_text = args.search_text
+
 
 print("start replying tweets containing \"" + search_text + "\" ...")
 

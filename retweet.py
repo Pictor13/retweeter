@@ -9,23 +9,12 @@ import time
 import random
 
 
+# API configuration
+
 CONSUMER_KEY = 'xxxxxxxxxxxxxxxx'
 CONSUMER_SECRET = 'xxxxxxxxxxxxxxxxxxxx'
 ACCESS_KEY = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 ACCESS_SECRET = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
-
-# API authentication --------------------------------------
-
-auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
-auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)
-api = tweepy.API(
-    auth,
-    retry_count = 5,
-    retry_delay = 10,
-    retry_errors = set([401, 404, 500, 503]),
-    wait_on_rate_limit = True,
-    wait_on_rate_limit_notify = True,
-)
 
 
 # Variables definition --------------------------------------
@@ -96,7 +85,24 @@ def reply():
 
 # run program --------------------------------------
 
+print("start replying tweets containing \"" + search_text + "\" ...")
+
+# API authentication --------------------------------------
+
+auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
+auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)
+api = tweepy.API(
+    auth,
+    retry_count = 5,
+    retry_delay = 10,
+    retry_errors = set([401, 404, 500, 503]),
+    wait_on_rate_limit = True,
+    wait_on_rate_limit_notify = True,
+)
+
+
 # fetching the trends names
+print('fetch latest trends ...')
 trend_names = fetch_trend_names()
 
 # pool

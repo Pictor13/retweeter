@@ -45,14 +45,18 @@ def fetch_trend_names():
     api_response = api.trends_place(id=woeid)
     trends = api_response[0]['trends']
     # to debug response format: ``import json`` + ``print(json.dumps(trends))``
-    trend_names = []
+    localized_trend_names = []
     for trend in trends:
-        # print(trend)
-        trend_names.append(trend['name'])
+        localized_trend_names.append(trend['name'])
+    return localized_trend_names
 
 
 def get_random_message():
-    random.choice(random_messages)
+    return random.choice(random_messages)
+
+
+def get_random_trendname():
+    return random.choice(localized_trend_names)
 
 
 def retrieve_last_seen_id(file_name):
@@ -124,8 +128,8 @@ api = tweepy.API(
 
 
 # fetching the trends names
-print('fetch latest trends ...')
-trend_names = fetch_trend_names()
+print('API: fetch latest trends ...')
+localized_trend_names = fetch_trend_names()
 
 # pool
 while True:

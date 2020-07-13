@@ -1,0 +1,7 @@
+# python local metadata files
+.python-version
+
+# macOS metadata files
+*.DS_Store
+*.DS_Store?
+

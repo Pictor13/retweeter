@@ -7,20 +7,23 @@ API.Twitter:
     consumer_key: '   CONFIGURE ME    '
     consumer_secret: '    CONFIGURE ME    '
 
-TWEET:
+retweet:
+  # "Search text" - String
+  # Term to search into own mentions; retweet if the term is in contained in the text.
+  search: '#sometag'
+
   # "Retweet messages" - List of messages
   # They will be picked randomly and used as text for the retweet of mentions.
   #
-  # Example:
-  #   retweet_messages[]=one foobarish example of tweet
-  #   retweet_messages[]="This is how I found God"
+  #   messages:
+  #   - 'one foobarish example of tweet'
+  #   - "This is how I found God"
   #
   # Note:
-  # - the `[]` implies that the variable is an array
   # - remember to consider the max lenght of a tweet, when adding new messages
   #
-  retweet_messages:
-  - 'esempio tweet'
-  - '#iGattiniOdianoSalvini https://imgur.com/0ZlAC0P'
-  - 'https://imgur.com/miOWDkq'
-  - '#iGattiniOdianoSalvini https://imgur.com/0ZlAC0P'
+  with_messages:
+  - "esempio tweet"
+  - "#iGattiniOdianoSalvini https://imgur.com/0ZlAC0P"
+  - "https://imgur.com/miOWDkq"
+  - "#iGattiniOdianoSalvini https://imgur.com/0ZlAC0P"

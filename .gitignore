@@ -1,3 +1,8 @@
+# project files
+var/*
+config/*
+!config/*.dist
+
 # python local metadata files
 .python-version
 

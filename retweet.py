@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import os
 import tweepy
 import time
 import random
@@ -21,44 +22,25 @@ ACCESS_SECRET = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 API_RATE_LIMIT = 5*60
 # storage for the last processed id & messages for the retweets.
 # location is under CONFIG_DIR.
-CONFIG_DIR = 'config/'
-STORAGE_FILENAME = 'last_seen_id.txt'
+CONFIG_DIR = 'config'
+VAR_DIR = 'var'
 RETWEETS_FILENAME = 'retweet_messages.txt'
+STORAGE_FILENAME = 'last_seen_id.txt'
+# value to initialize the last seen mention id
+DEFAULT_MENTION_ID = 1
 
 
 # Functions definition --------------------------------------
 
 def load_retweet_messages():
-    with open(CONFIG_DIR + RETWEETS_FILENAME) as filehandler:
+    with open(CONFIG_DIR + '/' + RETWEETS_FILENAME) as filehandler:
         retweet_messages = []
         # get each line that doesn't start with '//'
         for line in filehandler:
             line = line.strip()
             if line[0:2] != '//' and line != '':
-                retweet_messages.append(line);
+                retweet_messages.append(line)
     return retweet_messages
-
-
-def get_random_message():
-    return random.choice(retweet_messages)
-
-
-def get_random_trendname():
-    return random.choice(localized_trend_names)
-
-
-def retrieve_last_seen_id():
-    f_read = open(CONFIG_DIR + STORAGE_FILENAME, 'r')
-    last_seen_id = int(f_read.read().strip())
-    f_read.close()
-    return last_seen_id
-
-
-def store_last_seen_id(last_seen_id):
-    f_write = open(CONFIG_DIR + STORAGE_FILENAME, 'w')
-    f_write.write(str(last_seen_id))
-    f_write.close()
-    return
 
 
 def reply(search_text, last_mention_id):
@@ -71,12 +53,40 @@ def reply(search_text, last_mention_id):
     for mention in reversed(mentions):
         store_last_seen_id(mention.id)
         if search_text in mention.text.lower():
-            print(format('OKBLUE', str(mention.id) + ' - ' + mention.text))
+            print("mention: " + format('OKBLUE', str(mention.id) + ' - ' + mention.text))
             print("found \"" + format('BOLD', search_text) + "\". responding back ...")
             status_text = F"@{mention.user.screen_name} " + get_random_message()  # F is for formatted-string-literals
             status_text += " [trend: " + get_random_trendname() + "]"
             api_retweet(status_text, mention)    # retweet
     print('next check in ' + str(API_RATE_LIMIT) + ' seconds')
+
+
+def retrieve_last_seen_id():
+    try:
+        f_handler = open(VAR_DIR + '/' + STORAGE_FILENAME, 'r')
+    except FileNotFoundError:
+        # create default storage file, if it doesn't exist
+        store_last_seen_id(DEFAULT_MENTION_ID)
+        f_handler = open(VAR_DIR + '/' + STORAGE_FILENAME, 'r')
+    # get integer value from the first line of the file
+    last_seen_id = int(f_handler.read().strip())
+    f_handler.close()
+    return last_seen_id
+
+
+def store_last_seen_id(last_seen_id):
+    f_write = open(VAR_DIR + '/' + STORAGE_FILENAME, 'w')
+    f_write.write(str(last_seen_id))
+    f_write.close()
+    return f_write
+
+
+def get_random_message():
+    return random.choice(retweet_messages)
+
+
+def get_random_trendname():
+    return random.choice(localized_trend_names)
 
 
 # text formatting
@@ -137,6 +147,13 @@ def api_retweet(status_text, mention):
 
 
 # run program --------------------------------------
+
+# environment operations
+
+if not os.path.exists(VAR_DIR):
+    os.makedirs(VAR_DIR)
+# if not os.path.isfile(VAR_DIR + STORAGE_FILENAME):
+#     os.makedirs(VAR_DIR)
 
 # resolve script arguments
 parser = argparse.ArgumentParser()

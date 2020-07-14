@@ -1,6 +1,6 @@
 # retweeter
 
-Search for Twitter mentions containing a specific string and retweet them with a message (picked randomly from the ```retweet_messages.txt```).
+Search for Twitter mentions containing a specific string and retweet them with a message (picked randomly from a list of configured messages).
 
 ## Requirements:
 

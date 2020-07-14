@@ -9,6 +9,11 @@ Search for Twitter mentions containing a specific string and retweet them with a
 
 ## Usage:
 
+- ```git clone git@github.com:Pictor13/retweeter.git && cd retweeter```
 - duplicate `.dist` files with your custom values, under ```config/```
+- - ```cp config/retweet_messages.txt.dist config/retweet_messages.txt``` and then write you custom messages
 - ```python retweet.py --help``` to show available parameters
+
+### Default usage:
+
 - ```python retweet.py --dry-run false``` to run actually performing operations

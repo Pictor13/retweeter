@@ -41,16 +41,6 @@ def load_retweet_messages():
     return retweet_messages
 
 
-def fetch_trend_names():
-    api_response = api.trends_place(id=woeid)
-    trends = api_response[0]['trends']
-    # to debug response format: ``import json`` + ``print(json.dumps(trends))``
-    localized_trend_names = []
-    for trend in trends:
-        localized_trend_names.append(trend['name'])
-    return localized_trend_names
-
-
 def get_random_message():
     return random.choice(retweet_messages)
 
@@ -73,39 +63,22 @@ def store_last_seen_id(last_seen_id):
     return
 
 
-def reply(search_text):
-    print("find mentions and reply ...")
-    last_seen_id = retrieve_last_seen_id()
-    mentions = [] # in case api call fails
-    try:
-        mentions = api.mentions_timeline(last_seen_id)
-    except tweepy.error.TweepError as err:
-        apiError('cannot fetch mentions: ' + str(err))
+def reply(search_text, last_mention_id):
+    last_mention_id = last_mention_id if last_mention_id is not None else retrieve_last_seen_id()
+    print(f"find mentions (from ID: {last_mention_id}) and reply ...")
+    mentions = api_fetch_mentions(last_mention_id)
 
+    if len(mentions) == 0:
+        print('no mentions found.')
     for mention in reversed(mentions):
         store_last_seen_id(mention.id)
         if search_text in mention.text.lower():
             print(format('OKBLUE', str(mention.id) + ' - ' + mention.text))
-            print('found "' + format('BOLD', search_text) + '". responding back ...')
+            print(f"found '" + format('BOLD', search_text) + "'. responding back ...")
             status_text = '@{mention.user.screen_name} ' + get_random_message()
             status_text += ' [trend: ' + get_random_trendname() + ']'
-            try:
-                api.update_status(status_text, mention.id)
-                api.retweet(mention.id)
-            except tweepy.error.TweepError as err:
-                apiError('cannot retweet: ' + str(err))
-    if len(mentions) == 0:
-        print('no mentions found. next check in ' + str(api_rate_limit) + ' seconds')
-
-
-# print a failure message relative to API call; does not rais any exception
-def apiError(message):
-    print(format('FAIL', 'API ERROR: ' + message))
-
-
-# print a success message relative to API call
-def apiMsg(message):
-    print(format('OKGREEN', 'API: ') + message)
+            api_retweet(status_text, mention)    # retweet
+    print('next check in ' + str(api_rate_limit) + ' seconds')
 
 
 # text formatting
@@ -122,6 +95,49 @@ def format(type, text):
     return formats.get(type) + text + formats.get('ENDC')
 
 
+# Twitter API Functions definition --------------------------------------
+
+# print a failure message relative to API call; does not rais any exception
+def api_error(message):
+    print(format('FAIL', 'API ERROR: ' + message))
+
+
+# print a success message relative to API call
+def api_msg(message):
+    print(format('OKGREEN', 'API: ') + message)
+
+
+def fetch_trend_names():
+    api_response = api.trends_place(id=woeid)
+    trends = api_response[0]['trends']
+    # to debug response format: ``import json`` + ``print(json.dumps(trends))``
+    localized_trend_names = []
+    for trend in trends:
+        localized_trend_names.append(trend['name'])
+    return localized_trend_names
+
+
+def api_fetch_mentions(last_seen_id):
+    mentions = []   # in case api call fails
+    try:
+        mentions = api.mentions_timeline(last_seen_id)
+    except tweepy.error.TweepError as err:
+        api_error('cannot fetch mentions: ' + str(err))
+    return mentions
+
+
+def api_retweet(status_text, mention, dryrun):
+    if not dryrun:
+        try:
+            api.update_status(status_text, mention.id)
+            api.retweet(mention.id)
+        except tweepy.error.TweepError as err:
+            api_error('cannot retweet: ' + str(err))
+    else:
+        print(format('WARNING', 'API WOULD:') + ' update the status with "' + status_text + '"')
+        print(format('WARNING', 'API WOULD:') + ' retweet to ' + mention.user.screen_name + '')
+
+
 # run program --------------------------------------
 
 # resolve script arguments
@@ -134,15 +150,31 @@ parser.add_argument(
 parser.add_argument(
     '--trend-woeid',
     dest='trend_woeid',
-    default='721943'    # ROME
+    default='721943'    # WOEID for ROME
+)
+parser.add_argument(
+    '--dry-run',
+    type=bool,
+    dest='dry_run',
+    default='true'
+)
+parser.add_argument(
+    '--last-mention-id',
+    type=int,
+    dest='last_mention_id',
+    default=None
 )
 args = parser.parse_args()
 
 # assign script arguments
 search_text = args.search_text
 woeid = args.trend_woeid
+dryrun = args.dry_run
+last_mention_id = args.last_mention_id
 
 
+if dryrun:
+    print(format('WARNING', 'Running in dry-run mode: no write operation will be performed.'))
 print("start replying tweets containing \"" + format('BOLD', search_text) + "\" ...")
 
 # API authentication
@@ -160,7 +192,7 @@ api = tweepy.API(
 
 
 # fetching the trends names
-apiMsg('fetch latest trends')
+api_msg('fetch latest trends')
 localized_trend_names = fetch_trend_names()
 
 # load the messages for the retweets
@@ -168,5 +200,5 @@ retweet_messages = load_retweet_messages()
 
 # pool requests
 while True:
-    reply(search_text)
+    reply(search_text, last_mention_id)
     time.sleep(api_rate_limit)

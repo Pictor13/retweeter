@@ -73,23 +73,53 @@ def store_last_seen_id(last_seen_id):
     return
 
 
-def reply():
-    print("replying ...")
-    last_seen_id = retrieve_last_seen_id(STORAGE_FILENAME)
-    mentions = api.mentions_timeline(last_seen_id)
+def reply(search_text):
+    print("find mentions and reply ...")
+    last_seen_id = retrieve_last_seen_id()
+    mentions = [] # in case api call fails
+    try:
+        mentions = api.mentions_timeline(last_seen_id)
+    except tweepy.error.TweepError as err:
+        apiError('cannot fetch mentions: ' + str(err))
 
     for mention in reversed(mentions):
-        print(str(mention.id) + ' - ' + mention.text)
-        last_seen_id = mention.id
-        store_last_seen_id(last_seen_id, STORAGE_FILENAME)
+        store_last_seen_id(mention.id)
         if search_text in mention.text.lower():
-            print('found "' + search_text + '". responding back ...')
+            print(format('OKBLUE', str(mention.id) + ' - ' + mention.text))
+            print('found "' + format('BOLD', search_text) + '". responding back ...')
             status_text = '@{mention.user.screen_name} ' + get_random_message()
             status_text += ' [trend: ' + get_random_trendname() + ']'
-            api.update_status(status_text, mention.id)
-            api.retweet(mention.id)
+            try:
+                api.update_status(status_text, mention.id)
+                api.retweet(mention.id)
+            except tweepy.error.TweepError as err:
+                apiError('cannot retweet: ' + str(err))
     if len(mentions) == 0:
         print('no mentions found. next check in ' + str(api_rate_limit) + ' seconds')
+
+
+# print a failure message relative to API call; does not rais any exception
+def apiError(message):
+    print(format('FAIL', 'API ERROR: ' + message))
+
+
+# print a success message relative to API call
+def apiMsg(message):
+    print(format('OKGREEN', 'API: ') + message)
+
+
+# text formatting
+def format(type, text):
+    formats = {
+        'HEADER': '\033[95m',
+        'OKBLUE': '\033[94m',
+        'OKGREEN': '\033[92m',
+        'WARNING': '\033[93m',
+        'FAIL': '\033[91m',
+        'ENDC': '\033[0m',
+        'BOLD': '\033[1m'
+    }
+    return formats.get(type) + text + formats.get('ENDC')
 
 
 # run program --------------------------------------
@@ -113,7 +143,7 @@ search_text = args.search_text
 woeid = args.trend_woeid
 
 
-print("start replying tweets containing \"" + search_text + "\" ...")
+print("start replying tweets containing \"" + format('BOLD', search_text) + "\" ...")
 
 # API authentication
 
@@ -130,7 +160,7 @@ api = tweepy.API(
 
 
 # fetching the trends names
-print('API: fetch latest trends ...')
+apiMsg('fetch latest trends')
 localized_trend_names = fetch_trend_names()
 
 # load the messages for the retweets
@@ -138,5 +168,5 @@ retweet_messages = load_retweet_messages()
 
 # pool requests
 while True:
-    reply()
+    reply(search_text)
     time.sleep(api_rate_limit)

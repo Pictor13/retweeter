@@ -5,14 +5,7 @@ import tweepy
 import time
 import random
 import argparse
-
-
-# API configuration
-
-CONSUMER_KEY = 'xxxxxxxxxxxxxxxx'
-CONSUMER_SECRET = 'xxxxxxxxxxxxxxxxxxxx'
-ACCESS_KEY = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
-ACCESS_SECRET = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+import yaml
 
 
 # Variables definition --------------------------------------
@@ -20,30 +13,20 @@ ACCESS_SECRET = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 # max 5 minutes rate limit
 # See docs at: https://developer.twitter.com/ja/docs/basics/rate-limits
 API_RATE_LIMIT = 5*60
-# storage for the last processed id & messages for the retweets.
-# location is under CONFIG_DIR.
-CONFIG_DIR = 'config'
+# storage filename for the last processed id
+CONFIG_FILENAME = 'config.yaml'
+MENTION_ID_FILENAME = 'last_seen_id'
 VAR_DIR = 'var'
-RETWEETS_FILENAME = 'retweet_messages.txt'
-STORAGE_FILENAME = 'last_seen_id.txt'
 # value to initialize the last seen mention id
 DEFAULT_MENTION_ID = 1
 
 
+#
 # Functions definition --------------------------------------
-
-def load_retweet_messages():
-    with open(CONFIG_DIR + '/' + RETWEETS_FILENAME) as filehandler:
-        retweet_messages = []
-        # get each line that doesn't start with '//'
-        for line in filehandler:
-            line = line.strip()
-            if line[0:2] != '//' and line != '':
-                retweet_messages.append(line)
-    return retweet_messages
-
+#
 
 def reply(search_text, last_mention_id):
+    search_text_lower = search_text.lower()
     last_mention_id = last_mention_id if last_mention_id is not None else retrieve_last_seen_id()
     print(F"find mentions (from ID: {last_mention_id}) and reply ...")  # F is for formatted-string-literals
     mentions = api_fetch_mentions(last_mention_id)
@@ -52,9 +35,13 @@ def reply(search_text, last_mention_id):
         print('no mentions found.')
     for mention in reversed(mentions):
         store_last_seen_id(mention.id)
-        if search_text in mention.text.lower():
-            print("mention: " + format('OKBLUE', str(mention.id) + ' - ' + mention.text))
-            print("found \"" + format('BOLD', search_text) + "\". responding back ...")
+        # print(mention.text)
+        if search_text_lower in mention.text.lower():
+            print(
+                "found \"" + format('BOLD', search_text) + "\" into mention: "
+                + format('OKBLUE', str(mention.id) + ' - ' + mention.text)
+                + ". responding back ..."
+            )
             status_text = F"@{mention.user.screen_name} " + get_random_message()  # F is for formatted-string-literals
             status_text += " [trend: " + get_random_trendname() + "]"
             api_retweet(status_text, mention)    # retweet
@@ -63,11 +50,11 @@ def reply(search_text, last_mention_id):
 
 def retrieve_last_seen_id():
     try:
-        f_handler = open(VAR_DIR + '/' + STORAGE_FILENAME, 'r')
+        f_handler = open(VAR_DIR + '/' + MENTION_ID_FILENAME, 'r')
     except FileNotFoundError:
-        # create default storage file, if it doesn't exist
+        # create default file, if it doesn't exist
         store_last_seen_id(DEFAULT_MENTION_ID)
-        f_handler = open(VAR_DIR + '/' + STORAGE_FILENAME, 'r')
+        f_handler = open(VAR_DIR + '/' + MENTION_ID_FILENAME, 'r')
     # get integer value from the first line of the file
     last_seen_id = int(f_handler.read().strip())
     f_handler.close()
@@ -75,7 +62,7 @@ def retrieve_last_seen_id():
 
 
 def store_last_seen_id(last_seen_id):
-    f_write = open(VAR_DIR + '/' + STORAGE_FILENAME, 'w')
+    f_write = open(VAR_DIR + '/' + MENTION_ID_FILENAME, 'w')
     f_write.write(str(last_seen_id))
     f_write.close()
     return f_write
@@ -103,7 +90,14 @@ def format(type, text):
     return formats.get(type) + text + formats.get('ENDC')
 
 
+# convert string argument values to true/false boolean
+def str2bool(v):
+    return v.lower() in ("yes", "true", "t", "1")
+
+
+#
 # Twitter API Functions definition --------------------------------------
+#
 
 # print a failure message relative to API call; does not rais any exception
 def api_error(message):
@@ -135,32 +129,42 @@ def api_fetch_mentions(last_seen_id):
 
 
 def api_retweet(status_text, mention):
+    message = 'retweet to ' + mention.user.screen_name + ' with "' + format('OKBLUE', status_text) + '"'
     if not args.dry_run:
         try:
             api.update_status(status_text, mention.id)
             api.retweet(mention.id)
         except tweepy.error.TweepError as err:
             api_error('cannot retweet: ' + str(err))
+        api_msg(message)
     else:
-        print(format('WARNING', 'API WOULD:') + ' update the status with "' + status_text + '"')
-        print(format('WARNING', 'API WOULD:') + ' retweet to ' + mention.user.screen_name + '')
+        api_msg(format('WARNING', 'would ') + message)
 
 
-# run program --------------------------------------
+#
+# configure program --------------------------------------
+#
 
-# environment operations
+# environment & config operations
 
+# var/ folder
 if not os.path.exists(VAR_DIR):
     os.makedirs(VAR_DIR)
-# if not os.path.isfile(VAR_DIR + STORAGE_FILENAME):
-#     os.makedirs(VAR_DIR)
+
+# config file
+if not os.path.exists(CONFIG_FILENAME):
+    error_msg = "No configuration file. Did you forget to create a copy of '" + CONFIG_FILENAME + ".dist' ?"
+    raise FileNotFoundError(error_msg)
+with open(CONFIG_FILENAME, 'r') as stream:
+    config = yaml.safe_load(stream)
+
 
 # resolve script arguments
 parser = argparse.ArgumentParser()
 parser.add_argument(
     '--search',
     dest='search_text',
-    default='#spininelfianco'
+    default=config['retweet']['search']
 )
 parser.add_argument(
     '--trend-woeid',
@@ -169,9 +173,9 @@ parser.add_argument(
 )
 parser.add_argument(
     '--dry-run',
-    type=bool,
+    type=str2bool,
     dest='dry_run',
-    default='true'
+    default='True'
 )
 parser.add_argument(
     '--last-mention-id',
@@ -181,14 +185,20 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
+
+#
+# run program --------------------------------------
+#
+
 if args.dry_run:
     print(format('WARNING', 'Running in dry-run mode: no write operation will be performed.'))
 print("start replying tweets containing \"" + format('BOLD', args.search_text) + "\" ...")
 
 # API authentication
 
-auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
-auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)
+secrets = config['API.Twitter']
+auth = tweepy.OAuthHandler(secrets['CONSUMER_KEY'], secrets['CONSUMER_SECRET'])
+auth.set_access_token(secrets['ACCESS_KEY'], secrets['ACCESS_SECRET'])
 api = tweepy.API(
     auth,
     retry_count=5,
@@ -204,7 +214,9 @@ api_msg('fetch latest trends')
 localized_trend_names = fetch_trend_names(args.trend_woeid)
 
 # load the messages for the retweets
-retweet_messages = load_retweet_messages()
+retweet_messages = config['retweet']['with_messages']
+if not isinstance(retweet_messages, list) or len(retweet_messages) == 0:
+    raise ValueError('The configured `retweet_messages[]` must be a non-empty list')
 
 # pool requests
 while True:

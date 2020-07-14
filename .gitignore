@@ -1,7 +1,7 @@
 # project files
+*config.yaml
 var/*
-config/*
-!config/*.dist
+!*.dist
 
 # python local metadata files
 .python-version

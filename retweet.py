@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Fri Mar  5 17:10:23 2020
-@author: @MaryNewsWeb
-"""
 import tweepy
 import time
 import random
@@ -63,15 +59,15 @@ def get_random_trendname():
     return random.choice(localized_trend_names)
 
 
-def retrieve_last_seen_id(file_name):
-    f_read = open(CONFIG_DIR + file_name, 'r')
+def retrieve_last_seen_id():
+    f_read = open(CONFIG_DIR + STORAGE_FILENAME, 'r')
     last_seen_id = int(f_read.read().strip())
     f_read.close()
     return last_seen_id
 
 
-def store_last_seen_id(last_seen_id, file_name):
-    f_write = open(CONFIG_DIR + file_name, 'w')
+def store_last_seen_id(last_seen_id):
+    f_write = open(CONFIG_DIR + STORAGE_FILENAME, 'w')
     f_write.write(str(last_seen_id))
     f_write.close()
     return

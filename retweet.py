@@ -18,12 +18,10 @@ ACCESS_SECRET = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 
 # max 5 minutes rate limit
 # See docs at: https://developer.twitter.com/ja/docs/basics/rate-limits
-api_rate_limit = 5*60
-
-
-CONFIG_DIR = 'config/'
+API_RATE_LIMIT = 5*60
 # storage for the last processed id & messages for the retweets.
-# location is under CONFIG_PATH.
+# location is under CONFIG_DIR.
+CONFIG_DIR = 'config/'
 STORAGE_FILENAME = 'last_seen_id.txt'
 RETWEETS_FILENAME = 'retweet_messages.txt'
 
@@ -65,7 +63,7 @@ def store_last_seen_id(last_seen_id):
 
 def reply(search_text, last_mention_id):
     last_mention_id = last_mention_id if last_mention_id is not None else retrieve_last_seen_id()
-    print(f"find mentions (from ID: {last_mention_id}) and reply ...")
+    print(F"find mentions (from ID: {last_mention_id}) and reply ...")  # F is for formatted-string-literals
     mentions = api_fetch_mentions(last_mention_id)
 
     if len(mentions) == 0:
@@ -74,11 +72,11 @@ def reply(search_text, last_mention_id):
         store_last_seen_id(mention.id)
         if search_text in mention.text.lower():
             print(format('OKBLUE', str(mention.id) + ' - ' + mention.text))
-            print(f"found '" + format('BOLD', search_text) + "'. responding back ...")
-            status_text = '@{mention.user.screen_name} ' + get_random_message()
-            status_text += ' [trend: ' + get_random_trendname() + ']'
+            print("found \"" + format('BOLD', search_text) + "\". responding back ...")
+            status_text = F"@{mention.user.screen_name} " + get_random_message()  # F is for formatted-string-literals
+            status_text += " [trend: " + get_random_trendname() + "]"
             api_retweet(status_text, mention)    # retweet
-    print('next check in ' + str(api_rate_limit) + ' seconds')
+    print('next check in ' + str(API_RATE_LIMIT) + ' seconds')
 
 
 # text formatting
@@ -107,7 +105,7 @@ def api_msg(message):
     print(format('OKGREEN', 'API: ') + message)
 
 
-def fetch_trend_names():
+def fetch_trend_names(woeid):
     api_response = api.trends_place(id=woeid)
     trends = api_response[0]['trends']
     # to debug response format: ``import json`` + ``print(json.dumps(trends))``
@@ -126,8 +124,8 @@ def api_fetch_mentions(last_seen_id):
     return mentions
 
 
-def api_retweet(status_text, mention, dryrun):
-    if not dryrun:
+def api_retweet(status_text, mention):
+    if not args.dry_run:
         try:
             api.update_status(status_text, mention.id)
             api.retweet(mention.id)
@@ -166,16 +164,9 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-# assign script arguments
-search_text = args.search_text
-woeid = args.trend_woeid
-dryrun = args.dry_run
-last_mention_id = args.last_mention_id
-
-
-if dryrun:
+if args.dry_run:
     print(format('WARNING', 'Running in dry-run mode: no write operation will be performed.'))
-print("start replying tweets containing \"" + format('BOLD', search_text) + "\" ...")
+print("start replying tweets containing \"" + format('BOLD', args.search_text) + "\" ...")
 
 # API authentication
 
@@ -193,12 +184,12 @@ api = tweepy.API(
 
 # fetching the trends names
 api_msg('fetch latest trends')
-localized_trend_names = fetch_trend_names()
+localized_trend_names = fetch_trend_names(args.trend_woeid)
 
 # load the messages for the retweets
 retweet_messages = load_retweet_messages()
 
 # pool requests
 while True:
-    reply(search_text, last_mention_id)
-    time.sleep(api_rate_limit)
+    reply(args.search_text, args.last_mention_id)
+    time.sleep(API_RATE_LIMIT)

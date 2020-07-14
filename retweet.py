@@ -7,8 +7,9 @@ import random
 import argparse
 import yaml
 
-
+#
 # Variables definition --------------------------------------
+#
 
 # max 5 minutes rate limit
 # See docs at: https://developer.twitter.com/ja/docs/basics/rate-limits
@@ -147,11 +148,14 @@ def api_retweet(status_text, mention):
 
 # environment & config operations
 
-# var/ folder
+# get environment variables
+envs = os.environ
+
+# make var/ folder
 if not os.path.exists(VAR_DIR):
     os.makedirs(VAR_DIR)
 
-# config file
+# load config file
 if not os.path.exists(CONFIG_FILENAME):
     error_msg = "No configuration file. Did you forget to create a copy of '" + CONFIG_FILENAME + ".dist' ?"
     raise FileNotFoundError(error_msg)
@@ -162,17 +166,17 @@ with open(CONFIG_FILENAME, 'r') as stream:
         raise ValueError('The YAML config file is not formatted correctly.')
 
 
-# resolve script arguments
+# resolve script arguments and set defaults
 parser = argparse.ArgumentParser()
 parser.add_argument(
     '--search',
     dest='search_text',
-    default=config['retweet']['search']
+    default=config['mention']['search']
 )
 parser.add_argument(
     '--trend-woeid',
     dest='trend_woeid',
-    default='721943'    # WOEID for ROME
+    default=config['trend']['woeid']
 )
 parser.add_argument(
     '--dry-run',
@@ -189,6 +193,14 @@ parser.add_argument(
 args = parser.parse_args()
 
 
+# get Twitter API secrets from envrironment variables or from config file
+secrets = config['API.Twitter']
+secrets['CONSUMER_KEY'] = envs['TWITTER_CONSUMER_KEY'] if 'TWITTER_CONSUMER_KEY' in envs else secrets['CONSUMER_KEY']
+secrets['CONSUMER_SECRET'] = envs['TWITTER_CONSUMER_SECRET'] if 'TWITTER_CONSUMER_SECRET' in envs else secrets['CONSUMER_SECRET']
+secrets['ACCESS_KEY'] = envs['TWITTER_ACCESS_KEY'] if 'TWITTER_ACCESS_KEY' in envs else secrets['ACCESS_KEY']
+secrets['ACCESS_SECRET'] = envs['TWITTER_ACCESS_SECRET'] if 'TWITTER_ACCESS_SECRET' in envs else secrets['ACCESS_SECRET']
+
+
 #
 # run program --------------------------------------
 #
@@ -199,7 +211,6 @@ print("start replying tweets containing \"" + format('BOLD', args.search_text) +
 
 # API authentication
 
-secrets = config['API.Twitter']
 auth = tweepy.OAuthHandler(secrets['CONSUMER_KEY'], secrets['CONSUMER_SECRET'])
 auth.set_access_token(secrets['ACCESS_KEY'], secrets['ACCESS_SECRET'])
 api = tweepy.API(

@@ -5,8 +5,8 @@ Search for Twitter mentions containing a specific string and retweet them with a
 ## Requirements:
 
 - python >= 3.6
-- tweepy
-- pyyaml
+- ```pip install tweepy```
+- ```pip install pyyaml```
 
 ## Usage:
 

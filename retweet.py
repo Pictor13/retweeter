@@ -156,7 +156,10 @@ if not os.path.exists(CONFIG_FILENAME):
     error_msg = "No configuration file. Did you forget to create a copy of '" + CONFIG_FILENAME + ".dist' ?"
     raise FileNotFoundError(error_msg)
 with open(CONFIG_FILENAME, 'r') as stream:
-    config = yaml.safe_load(stream)
+    try:
+        config = yaml.safe_load(stream)
+    except Exception:
+        raise ValueError('The YAML config file is not formatted correctly.')
 
 
 # resolve script arguments

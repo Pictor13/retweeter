@@ -195,10 +195,10 @@ args = parser.parse_args()
 
 # get Twitter API secrets from envrironment variables or from config file
 secrets = config['API.Twitter']
-secrets['CONSUMER_KEY'] = envs['TWITTER_CONSUMER_KEY'] if 'TWITTER_CONSUMER_KEY' in envs else secrets['consumer_key']
-secrets['CONSUMER_SECRET'] = envs['TWITTER_CONSUMER_SECRET'] if 'TWITTER_CONSUMER_SECRET' in envs else secrets['consumer_secret']
-secrets['ACCESS_KEY'] = envs['TWITTER_ACCESS_KEY'] if 'TWITTER_ACCESS_KEY' in envs else secrets['access_key']
-secrets['ACCESS_SECRET'] = envs['TWITTER_ACCESS_SECRET'] if 'TWITTER_ACCESS_SECRET' in envs else secrets['access_secret']
+secrets['consumer_key'] = envs['TWITTER_CONSUMER_KEY'] if 'TWITTER_CONSUMER_KEY' in envs else secrets['consumer_key']
+secrets['consumer_secret'] = envs['TWITTER_CONSUMER_SECRET'] if 'TWITTER_CONSUMER_SECRET' in envs else secrets['consumer_secret']
+secrets['access_key'] = envs['TWITTER_ACCESS_KEY'] if 'TWITTER_ACCESS_KEY' in envs else secrets['access_key']
+secrets['access_secret'] = envs['TWITTER_ACCESS_SECRET'] if 'TWITTER_ACCESS_SECRET' in envs else secrets['access_secret']
 
 
 #
@@ -211,8 +211,8 @@ print("start replying tweets containing \"" + format('BOLD', args.search_text) +
 
 # API authentication
 
-auth = tweepy.OAuthHandler(secrets['CONSUMER_KEY'], secrets['CONSUMER_SECRET'])
-auth.set_access_token(secrets['ACCESS_KEY'], secrets['ACCESS_SECRET'])
+auth = tweepy.OAuthHandler(secrets['consumer_key'], secrets['consumer_secret'])
+auth.set_access_token(secrets['access_key'], secrets['access_secret'])
 api = tweepy.API(
     auth,
     retry_count=5,

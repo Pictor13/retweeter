@@ -32,6 +32,7 @@ retweet:
   #
   # Note:
   # - remember to consider the max lenght of a tweet, when adding new messages
+  # - double-quote/aphex strings should be escaped with slash; e.g. 'D\'Artagnan'
   #
   with_messages:
   - "esempio tweet"

@@ -195,10 +195,10 @@ args = parser.parse_args()
 
 # get Twitter API secrets from envrironment variables or from config file
 secrets = config['API.Twitter']
-secrets['CONSUMER_KEY'] = envs['TWITTER_CONSUMER_KEY'] if 'TWITTER_CONSUMER_KEY' in envs else secrets['CONSUMER_KEY']
-secrets['CONSUMER_SECRET'] = envs['TWITTER_CONSUMER_SECRET'] if 'TWITTER_CONSUMER_SECRET' in envs else secrets['CONSUMER_SECRET']
-secrets['ACCESS_KEY'] = envs['TWITTER_ACCESS_KEY'] if 'TWITTER_ACCESS_KEY' in envs else secrets['ACCESS_KEY']
-secrets['ACCESS_SECRET'] = envs['TWITTER_ACCESS_SECRET'] if 'TWITTER_ACCESS_SECRET' in envs else secrets['ACCESS_SECRET']
+secrets['CONSUMER_KEY'] = envs['TWITTER_CONSUMER_KEY'] if 'TWITTER_CONSUMER_KEY' in envs else secrets['consumer_key']
+secrets['CONSUMER_SECRET'] = envs['TWITTER_CONSUMER_SECRET'] if 'TWITTER_CONSUMER_SECRET' in envs else secrets['consumer_secret']
+secrets['ACCESS_KEY'] = envs['TWITTER_ACCESS_KEY'] if 'TWITTER_ACCESS_KEY' in envs else secrets['access_key']
+secrets['ACCESS_SECRET'] = envs['TWITTER_ACCESS_SECRET'] if 'TWITTER_ACCESS_SECRET' in envs else secrets['access_secret']
 
 
 #
@@ -225,7 +225,9 @@ api = tweepy.API(
 
 # fetching the trends names
 api_msg('fetch latest trends')
+api_msg('waiting for response ...')
 localized_trend_names = fetch_trend_names(args.trend_woeid)
+api_msg('last trends fetched.')
 
 # load the messages for the retweets
 retweet_messages = config['retweet']['with_messages']
